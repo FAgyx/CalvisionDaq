@@ -161,19 +161,36 @@ void RootWriter::handle_event(const x742EventData& event) {
     //     }
     // }
 
+    // Copy time axis for first group based on sampling frequency
     cblas_dcopy(N_Samples, adc_to_mv.times[event.group_data[0].frequency].data(), 1, time_, 1);
     for (UIntType g = 0; g < N_Groups; g++) {
         if (event.group_present[g]) {
             if (event.group_data[g].trigger_digitized) {
                 trigger_digitized_[g] = true;
+                
                 convert_adc_to_mv(event.group_data[g].trigger_data, trigger_[g]);
+
+                // Store raw ADC for debugging or dump
+                // std::cout<<"Trigger decoded data here"<<std::endl;
+                for (UIntType i = 0; i < N_Samples; i++) {
+                    // std::cout<<"data["<<i<<"]="<< event.group_data[g].trigger_data[i] <<std::endl;
+                    adc_channels_[N_Total_Channels][i] = static_cast<Float_t>(event.group_data[g].trigger_data[i]);
+                }
             } else {
                 trigger_digitized_[g] = false;
             }
 
             for (UIntType c = 0; c < N_Channels && g * N_Channels + c < N_Total_Channels; c++) {
                 channel_digitized_[g * N_Channels + c] = true;
+
+                // Convert to mV
                 convert_adc_to_mv(event.group_data[g].channel_data[c], channels_[g * N_Channels + c]);
+
+                // Store raw ADC for debugging or dump
+                for (UIntType i = 0; i < N_Samples; i++) {
+                    adc_channels_[g * N_Channels + c][i] = static_cast<Float_t>(event.group_data[g].channel_data[c][i]);
+                }
+
             }
         } else {
             trigger_digitized_[g] = false;
@@ -202,12 +219,21 @@ void RootWriter::write() {
     file_ = nullptr;
 }
 
+
 void RootWriter::dump_last_event(const std::string& filename) {
     FileWriter out(filename, OpenMode::Truncate);
 
     out.write<Double_t, N_Samples>(time_);
-    // First 8 channels are going to SiPM readout signals, other channels will be auxiliary devices
-    for (UIntType i = 0; i < N_Total_Channels; i++) {
-        out.write<Float_t, N_Samples>(channels_[i]);
+
+    // // First 8 channels are going to SiPM readout signals, other channels will be auxiliary devices
+    // for (UIntType i = 0; i < N_Total_Channels; i++) {
+    //     out.write<Float_t, N_Samples>(channels_[i]);
+    // }
+
+    // out.write<Float_t, N_Samples>(trigger_[0]);
+
+
+    for (UIntType i = 0; i < N_Total_Channels + 1; i++) {
+        out.write<Float_t, N_Samples>(adc_channels_[i]);
     }
 }

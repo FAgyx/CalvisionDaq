@@ -5,6 +5,9 @@ function(make_CalvisionDaq_exec EXEC_NAME LINK_LIBS)
         target_link_libraries(${EXEC_NAME} PRIVATE ${LINK_LIB})
     endforeach()
 
+    target_include_directories(${EXEC_NAME} PRIVATE ${CBLAS_INCLUDE_DIR})
+
+
     install(TARGETS ${EXEC_NAME}
         LIBRARY DESTINATION ${CalvisionDaq_INSTALL_LIB_DIR}
         ARCHIVE DESTINATION ${CalvisionDaq_INSTALL_LIB_DIR}

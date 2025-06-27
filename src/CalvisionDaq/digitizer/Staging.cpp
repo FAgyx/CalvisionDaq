@@ -39,7 +39,7 @@ std::optional<size_t> device_is_digitizer(const std::filesystem::path& device) {
 }
 
 std::filesystem::path staging_path() {
-    return std::filesystem::path{"/home/uva/daq_staging"};
+    return std::filesystem::path{"/hdd/DRS_staging"};
 }
 
 std::filesystem::path calibration_path() {
@@ -72,20 +72,25 @@ AllDigitizers::AllDigitizers(std::optional<std::string> run_name) {
         ::create_directory(staging_path().string() + "/" + *run_name);
     }
 
-    constexpr std::array<size_t, 2> optical_link_pids = {49100, 49841};
+    // constexpr std::array<size_t, 2> optical_link_pids = {49100, 49841};
 
-    for (const size_t pid : optical_link_pids) {
-        try {
-            ctxs.push_back(std::make_unique<DigitizerContext>(CAEN_DGTZ_USB_A4818, pid, run_name));
-        } catch (const CaenError& e) {
-            std::cerr << "A4818 Optical Link " << pid << " is unavailable.\n";
-        }
-    }
+    // for (const size_t pid : optical_link_pids) {
+    //     try {
+    //         ctxs.push_back(std::make_unique<DigitizerContext>(CAEN_DGTZ_USB_A4818, pid, run_name));
+    //     } catch (const CaenError& e) {
+    //         std::cerr << "A4818 Optical Link " << pid << " is unavailable.\n";
+    //     }
+    // }
 
     for (const auto& dir_entry : std::filesystem::directory_iterator{"/dev"}) {
         if (auto dev_id = device_is_digitizer(dir_entry.path())) {
             ctxs.push_back(std::make_unique<DigitizerContext>(CAEN_DGTZ_USB, *dev_id, run_name));
         }
+    }
+
+    std::cout << "Total digitizer contexts found: " << ctxs.size() << "\n";
+    for (const auto& ctx : ctxs) {
+        std::cout << " - Serial: " << ctx->serial_code() << "\n";
     }
 }
 

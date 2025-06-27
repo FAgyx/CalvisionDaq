@@ -40,7 +40,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
     size_t decode_count = 0;
 
     while (auto block = queue.pop()) {
-        std::cout << "Decoding event " << decode_count << "\n";
+        // std::cout << "Decoding event " << decode_count << "\n";
         // std::cout << thread_id << ": Got a block!\n";
 
         // const auto wait_duration = stopwatch();
@@ -55,6 +55,8 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
 
         decoder.read_event(input);
         decoder.apply_corrections();
+
+        
         // stopwatch();
         root_io.handle_event(decoder.event());
         // std::cout << thread_id << ": Root io: " << stopwatch() << "\n";
@@ -186,7 +188,7 @@ void interrupt_listener() {
                 break;
             } else if (message == "sample plot\n") {
                 dump_hv.store(true);
-                dump_lv.store(true);
+                // dump_lv.store(true);
                 current_size = 0;
             }
         }
@@ -196,8 +198,10 @@ void interrupt_listener() {
     tcsetattr(STDIN_FILENO, TCSANOW, &cinsave);
 }
 
+
 template <DigiMap d>
 DigitizerContext& make_context(AllDigitizers& digis, char** argv) {
+
     auto* ctx = digis.get<d>();
     if (!ctx) {
         std::cerr << "Couldn't find "
@@ -232,12 +236,12 @@ int main(int argc, char** argv) {
         AllDigitizers digis{std::string(argv[1])};
 
         auto& hv_ctx = make_context<DigiMap::HG>(digis, argv);
-        auto& lv_ctx = make_context<DigiMap::LG>(digis, argv);
+        // auto& lv_ctx = make_context<DigiMap::LG>(digis, argv);
 
         std::cout << "Beginning to make threads...\n";
 
         main_threads.emplace_back(&main_loop, 1, std::ref(hv_ctx), std::ref(dump_hv));
-        main_threads.emplace_back(&main_loop, 2, std::ref(lv_ctx), std::ref(dump_lv));
+        // main_threads.emplace_back(&main_loop, 2, std::ref(lv_ctx), std::ref(dump_lv));
 
 
         // joining threads

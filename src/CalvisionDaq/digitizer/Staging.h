@@ -23,8 +23,10 @@ INDEXED_ENUM(DigiMapValue,
 )
 
 constexpr inline auto DigiMapTable = EnumTable<DigiMapIndexer, DigiMapValueIndexer, uint32_t, std::string_view, uint32_t>::make_table(
-    std::pair(DigiMap::HG, std::tuple(21333, "HG", 2)),
-    std::pair(DigiMap::LG, std::tuple(29622, "LG", 3))
+    std::pair(DigiMap::HG, std::tuple(53365, "HG", 2)), // <-- config at argv[2]
+    // std::pair(DigiMap::HG, std::tuple(21333, "HG", 2)),
+    std::pair(DigiMap::LG, std::tuple(29622, "LG", 3))  // <-- config at argv[3]
+
 );
 
 class Digitizer;

@@ -27,7 +27,7 @@ private:
     TTree* tree_;
     TFile* file_;
 
-    constexpr static UIntType N_Total_Channels = 10;
+    constexpr static UIntType N_Total_Channels = 16;
 
     TParameter<Int_t> samples_;
     TArrayD vertical_gain_, vertical_offset_;
@@ -36,4 +36,6 @@ private:
     Float_t channels_[N_Total_Channels][N_Samples];
     Float_t trigger_[N_Groups][N_Samples];
     Bool_t channel_digitized_[N_Total_Channels], trigger_digitized_[N_Groups];
+    Float_t adc_channels_[N_Total_Channels+1][N_Samples];
+
 };

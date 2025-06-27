@@ -1,6 +1,8 @@
 set(LIBRARY_NAME "${PROJECT_NAME}Root")
 
 make_CalvisionDaq_library(${LIBRARY_NAME})
+# Ensure cblas.h is found
+target_include_directories(${LIBRARY_NAME} PRIVATE ${CBLAS_INCLUDE_DIR})
 
 target_link_libraries(${LIBRARY_NAME} PUBLIC
     blas

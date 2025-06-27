@@ -47,11 +47,28 @@ Digitizer::Digitizer()
     , max_readout_count_(std::nullopt)
 {}
 
+#include <fstream>
+
+void Digitizer::print_raw_file(const std::string& path) {
+    std::ifstream f(path);
+    if (!f) {
+        std::cerr << "Failed to open config file for printing: " << path << std::endl;
+        return;
+    }
+    std::cout << "---- Begin Config File Dump: " << path << " ----" << std::endl;
+    std::string line;
+    while (std::getline(f, line)) {
+        std::cout << line << std::endl;
+    }
+    std::cout << "---- End Config File Dump ----" << std::endl;
+}
+
 void Digitizer::load_config(const std::string& config_file)
 {
     if (config_file == "") {
         log() << "[WARNING] No config file provided, continuing\n";
     }
+    // print_raw_file(config_file);
     
     std::ifstream config_input(config_file);
     run_setup(config_input, *this);
@@ -94,6 +111,7 @@ void Digitizer::reset() {
 }
 
 void Digitizer::setup() {
+    log() << "Running Digitizer::setup()\n";
     reset();
 
     check(CAEN_DGTZ_SetFastTriggerDigitizing(handle_, CAEN_DGTZ_ENABLE));

@@ -42,7 +42,7 @@ void Decoder::read_event(BinaryInputStream& input) {
     // Buffers - can't be static if multithreaded
     std::array<UIntType, 4> header;
     std::array<UIntType, 3 * N_Samples> channels;
-    std::array<UIntType, 3 * N_Chunks> trigger;
+    std::array<UIntType, 3 * N_Chunks> trigger; //there are 1024*12 bits = 384 int = 3*128 for TR0
 
     // Event header
     if (!input.read_buffer(header)) return;
@@ -51,6 +51,7 @@ void Decoder::read_event(BinaryInputStream& input) {
     const auto& [BOARDID, BF, RES1, PATTERN, RES2, GROUPMASK] = bmp::read<5,1,2,16,6,2>(std::get<1>(header));
     std::tie(std::ignore, event_data_.event_counter) = bmp::read<8,24>(std::get<2>(header));
     event_data_.time_tag = std::get<3>(header);
+    // std::cout<<"N_Channels = "<<N_Channels<<std::endl;
 
     // TODO: Check BF
 
@@ -73,20 +74,75 @@ void Decoder::read_event(BinaryInputStream& input) {
             group_data.sample_period = *FrequencyTable.get<FrequencyValue::SamplingPeriod>(static_cast<CAEN_DGTZ_DRS4Frequency_t>(group_data.frequency));
 
             // TODO: check size == 3 * N_Samples
+            // std::cout<<"Event "<<event_data_.event_counter<<" size = "<<size<<std::endl;
 
             input.read_buffer(channels);
+
+            // // Dump only once, on the first read_buffer
+            // if (!dumped_) {
+            //     std::ofstream dump_file("raw_channels_dump_event.txt");
+            //     if (dump_file.is_open()) {
+            //         dump_file << "[Raw channel data (one event, all 1024 samples)]\n";
+            //         for (UIntType i = 0; i < channels.size(); ++i) {
+            //             dump_file << "channels[" << i << "] = 0x"
+            //             << std::hex << std::setw(8) << std::setfill('0') << channels[i]
+            //             << std::dec << "\n";
+            //         }
+            //         dump_file.close();
+            //         std::cout << "Dumped raw data for one event to raw_channels_dump_event.txt\n";
+            //         dumped_ = true;  // Mark as done
+            //     } else {
+            //         std::cerr << "Error: Could not open file for writing.\n";
+            //     }
+            // }
+
+
             read_channels<N_Samples>(channels,
                     [&group_data] (UIntType i, UIntType c) -> float& {
                         return group_data.channel_data[c][i];
                     });
 
+            // Dump decoded channel data
+            // if (decoded_dumped_<100) {
+            //     std::ofstream decoded_file("decoded_channels_event.txt", std::ios::app);
+            //     if (decoded_file.is_open()) {
+            //         for (UIntType i = 0; i < N_Samples; ++i) {
+            //             decoded_file << group_data.channel_data[1][i] << " ";
+            //         }
+            //         decoded_file << "\n";
+            //         decoded_dumped_++;
+            //         decoded_file.close();
+            //     }
+                
+            //     else {
+            //         std::cerr << "Error: Could not open decoded channel file for writing.\n";
+            //     }
+            // }
+
             if (group_data.trigger_digitized) {
+                // this is for reading TR0. N_Channels = 8
                 input.read_buffer(trigger);
 
                 read_channels<N_Chunks>(trigger,
                         [&group_data] (UIntType i, UIntType c) -> float& {
                             return group_data.trigger_data[N_Channels * i + c];
                         });
+                // dump first 100 triggers
+                // if (decoded_dumped_<100) {
+                //     std::ofstream decoded_file("decoded_trigger_event.txt", std::ios::app);
+                //     if (decoded_file.is_open()) {
+                //         for (UIntType i = 0; i < N_Samples; ++i) {
+                //             decoded_file << group_data.trigger_data[i] << " ";
+                //         }
+                //         decoded_file << "\n";
+                //         decoded_dumped_++;
+                //         decoded_file.close();
+                //     }
+                    
+                //     else {
+                //         std::cerr << "Error: Could not open decoded channel file for writing.\n";
+                //     }
+                // }
             }
 
             std::tie(std::ignore, group_data.trigger_time_tag) = bmp::read<2,30>(input.read_int());
@@ -100,6 +156,22 @@ void Decoder::apply_corrections() {
         if (event_data_.group_present[g]) {
             auto& group_data = event_data_.group_data[g];
             group_data.ApplyDataCorrection(&raw_tables_[group_data.frequency][g], 0b111);
+
+            // if (decoded_dumped_<100) {
+            //     std::ofstream decoded_file("corrected_channels_event.txt", std::ios::app);
+            //     if (decoded_file.is_open()) {
+            //         for (UIntType i = 0; i < N_Samples; ++i) {
+            //             decoded_file << group_data.channel_data[1][i] << " ";
+            //         }
+            //         decoded_file << "\n";
+            //         decoded_dumped_++;
+            //         decoded_file.close();
+            //     }
+                
+            //     else {
+            //         std::cerr << "Error: Could not open decoded channel file for writing.\n";
+            //     }
+            // }
         }
     }
 }

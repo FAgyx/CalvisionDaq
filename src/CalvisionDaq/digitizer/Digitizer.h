@@ -25,6 +25,7 @@ public:
 
     void load_config(const std::string& config_file);
     UIntType serial_code() const;
+    void print_raw_file(const std::string& path);
 
     void set_log(std::ostream* log);
     std::ostream& log() const;

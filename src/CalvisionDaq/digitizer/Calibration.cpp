@@ -129,6 +129,11 @@ void CalibrationTables::write_all(UIntType serial_number) const {
 }
 
 void CalibrationTables::read(UIntType serial_number, CAEN_DGTZ_DRS4Frequency_t frequency) {
+    std::ifstream test(CalibrationTables::filename(serial_number, frequency));
+    if (!test.good()) {
+        std::cerr << "Calibration file not found: " << CalibrationTables::filename(serial_number, frequency) << "\n";
+    }
+
     BinaryInputFileStream in(CalibrationTables::filename(serial_number, frequency));
     for (auto&& group : tables_[static_cast<UIntType>(frequency)]) {
         group.read(in);

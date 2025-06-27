@@ -166,20 +166,34 @@ std::tuple<Args...> parse_arguments(const std::vector<std::string>& tokens, size
     return parse_arguments<std::tuple<Args...> >(tokens, start, std::make_index_sequence<sizeof...(Args)>{});
 }
 
+// std::vector<std::string> tokenize(const std::string& line) {
+//     std::vector<std::string> tokens;
+//     size_t last = 0;
+//     for (size_t i = 0; i < line.length(); i++) {
+//         if (line[i] == ' ') {
+//             tokens.push_back(line.substr(last, i - last));
+//             last = i+1;
+//         }
+//     }
+//     if (last < line.length()) {
+//         tokens.push_back(line.substr(last));
+//     }
+//     return tokens;
+// }
+
+#include <sstream>
+
 std::vector<std::string> tokenize(const std::string& line) {
     std::vector<std::string> tokens;
-    size_t last = 0;
-    for (size_t i = 0; i < line.length(); i++) {
-        if (line[i] == ' ') {
-            tokens.push_back(line.substr(last, i - last));
-            last = i+1;
-        }
-    }
-    if (last < line.length()) {
-        tokens.push_back(line.substr(last));
+    std::istringstream iss(line);
+    std::string token;
+    while (iss >> token) {
+        tokens.push_back(token);
     }
     return tokens;
 }
+
+
 
 // ----- Run Commands
 
@@ -190,9 +204,28 @@ enum class CommandType {
 };
 
 void run_common(Digitizer& digi, const std::vector<std::string>& tokens) {
+    if (tokens.empty()) {
+        std::cout << "Error: empty token list passed to run_common" << std::endl;
+        return;
+    }
+
+    // Lookup the command
     auto lookup_result = CommonCommandTable.lookup<CommandValue::Name>(tokens[0]);
-    if (!lookup_result) throw std::runtime_error("Unrecognized common command " + tokens[0]);
-    
+    if (!lookup_result.has_value()) {
+        std::cout << "Unrecognized common command: " << tokens[0] << std::endl;
+        throw std::runtime_error("Unrecognized common command " + tokens[0]);
+    }
+
+    try {
+        auto entry = CommonCommandTable.get(lookup_result->first);
+        if (!entry) {
+            std::cout << "Command enum found in lookup, but failed to get string name from table." << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cout << "Exception while accessing table entry: " << e.what() << std::endl;
+    }
+
+    // Proceed with executing the command
     switch (lookup_result->first) {
         case CommonCommand::Open: {
             std::cout << "Open has been deprecated in favor of automatically matching digitizer serial numbers\n";
@@ -332,14 +365,24 @@ void run_trigger(Digitizer& digi, const std::vector<std::string>& tokens) {
     }   
 }
 
+
+
+
 void run_setup(std::istream& input, Digitizer& digi) {
     CommandType command_type = CommandType::Common;
-
     std::optional<UIntType> group = std::nullopt;
-
     std::string line;
+
+    if (!input.good()) {
+        std::cout << "[ERROR] Input stream is in a bad state (EOF or failbit set)" << std::endl;
+        return;
+    }
+
     while (std::getline(input, line)) {
+        // Trim leading/trailing whitespace or handle stray CR/LF characters if needed
+        if (line.empty()) continue;
         std::vector<std::string> tokens = tokenize(line);
+
         if (tokens.empty()) {
             continue;
         } else if (tokens[0] == "[COMMON]") {

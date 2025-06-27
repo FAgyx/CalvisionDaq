@@ -19,6 +19,21 @@ include("${CMAKE_PREFIX_PATH}/lib/cmake/CppUtils/CppUtilsCUtilsTargets.cmake")
 include("${CMAKE_PREFIX_PATH}/lib/cmake/CppUtils/CppUtilsIOTargets.cmake")
 
 find_package(BLAS REQUIRED)
+find_path(CBLAS_INCLUDE_DIR cblas.h
+  PATHS
+    /usr/include
+    /usr/include/openblas
+    /usr/include/cblas
+)
+
+if(NOT CBLAS_INCLUDE_DIR)
+  message(FATAL_ERROR "Could not find cblas.h")
+else()
+  message(STATUS " Found cblas.h at: ${CBLAS_INCLUDE_DIR}")
+endif()
+
+#  Make it GLOBAL so all subdirs (like exec/) see it
+set(CBLAS_INCLUDE_DIR "${CBLAS_INCLUDE_DIR}" CACHE INTERNAL "Path to cblas.h for CalvisionDaq")
 
 
 set(CalvisionDaq_BUILD_INCLUDE_DIR "${CalvisionDaq_SOURCE_DIR}/src")
