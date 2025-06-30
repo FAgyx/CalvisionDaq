@@ -4,17 +4,32 @@ DRS readout and analysis for Calvision.
 
 ## Dependencies
 
-Uses the `calvision` conda environment on the Calvision portable computer. Needs CAEN libraries
-which is a little bit of a mess at the moment (not in the git repo since they're proprietary?). Also
-needs the github repo `Hollenbeck-Hayden/cpp-utils` but this is already installed in the Calvision
-`local_install` directory.
+Install CAENComm, CAENVMELib and CAENDigitizer from CAEN website. CAENUSBdrvB is not used and not required to install.
+
+
+## Change data storage location
+Modify line 42 in file CalvisionDaq/src/CalvisionDAQ/digitizer/Staging.cpp
+```return std::filesystem::path{"/hdd/DRS_staging"}```
+to your data storage directory.
+
 
 ## Building
-
-Usual cmake build process:
 ```bash
-git clone https://github.com/hhollenb/CalvisionDaq.git
+git clone https://github.com/FAgyx/CalvisionDaq.git
 cd CalvisionDaq
+```
+
+Build cpp_utils first. Usual cmake build process:
+```bash
+cd cpp_utils
+mkdir build && cd build
+cmake -DCMAKE_PREFIX_PATH=$HOME/local_install -DCMAKE_INSTALL_PREFIX=$HOME/local_install ..
+make -j4 && make install
+```
+
+
+Then cd back to main folder CalvisionDaq and build CalvisionDAQ:
+```bash
 mkdir build && cd build
 cmake -DCMAKE_PREFIX_PATH=$HOME/local_install -DCMAKE_INSTALL_PREFIX=$HOME/local_install ..
 make -j4 && make install
@@ -25,8 +40,6 @@ make -j4 && make install
 Executables will be in `build/src/CalvisionDaq/exec`. The current executables are:
 
  - `calibrate`: Downloads and saves the digitizer's calibration files.
- - `readout`: Multithreaded readout of raw digitizer data. Very fast if events are at risk of being dropped.
- - `decode`: Decodes a raw digitizer data file into a root tree. Follows in real time the raw digitizer output.
-    Because it's continuously following the raw data file, type `q<Enter>` to quit the decoding (handled asynchronously,
-    so can be typed at any time).
- - 'read\_and\_decode`: Reads and decodes the digitizer. Slower than readout/decode, and not tested yet.
+ - `dual\_readout`: Multithreaded readout of raw digitizer data. Very fast if events are at risk of being dropped.
+
+Executables will also be copied to $HOME/local_install after running make install. CalvisionGUI will call corresponding executables with necessary arguments when needed. You do not need to manually run these executables in command line.

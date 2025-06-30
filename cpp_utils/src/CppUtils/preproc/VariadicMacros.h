@@ -1,0 +1,166 @@
+#pragma once
+
+#define SEP_COMMA ,
+#define SEP_SEMICOLON ;
+
+#define CPPUTILS_PREPEND_NAMESPACE(e, x) e::x
+
+// CPPUTILS_NARGS need to be defered 1 level
+#define CPPUTILS_NARGS(...) CPPUTILS_NARGS_(__VA_ARGS__, CPPUTILS_RSEQ_N())
+#define CPPUTILS_NARGS_(...) CPPUTILS_ARGN(__VA_ARGS__)
+#define CPPUTILS_ARGN( \
+         _1,  _2,  _3,  _4,  _5,  _6,  _7,  _8,  _9, _10, \
+        _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, \
+        _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, \
+        _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, \
+        _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, \
+        _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, \
+        _61, _62, _63, N, ...) N
+#define CPPUTILS_RSEQ_N() \
+        63, 62, 61, 60, \
+        59, 58, 57, 56, 55, 54, 53, 52, 51, 50, \
+        49, 48, 47, 46, 45, 44, 43, 42, 41, 40, \
+        39, 38, 37, 36, 35, 34, 33, 32, 31, 30, \
+        29, 28, 27, 26, 25, 24, 23, 22, 21, 20, \
+        19, 18, 17, 16, 15, 14, 13, 12, 11, 10, \
+         9,  8,  7,  6,  5,  4,  3,  2,  1
+
+
+
+
+#define CPPUTILS_0_MAP1(m, t, ...) m(t)
+#define CPPUTILS_0_MAP2(m, t, ...) m(t) CPPUTILS_MAP1(m, __VA_ARGS__)
+#define CPPUTILS_0_MAP3(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP2(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP4(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP3(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP5(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP4(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP6(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP5(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP7(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP6(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP8(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP7(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP9(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP8(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP10(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP9(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP11(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP10(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP12(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP11(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP13(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP12(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP14(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP13(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP15(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP14(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP16(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP15(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP17(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP16(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP18(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP17(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP19(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP18(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP20(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP19(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP21(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP20(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP22(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP21(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP23(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP22(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP24(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP23(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP25(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP24(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP26(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP25(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP27(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP26(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP28(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP27(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP29(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP28(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP30(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP29(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP31(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP30(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP32(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP31(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP33(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP32(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP34(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP33(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP35(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP34(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP36(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP35(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP37(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP36(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP38(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP37(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP39(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP38(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP40(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP39(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP41(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP40(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP42(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP41(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP43(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP42(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP44(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP43(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP45(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP44(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP46(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP45(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP47(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP46(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP48(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP47(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP49(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP48(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP50(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP49(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP51(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP50(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP52(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP51(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP53(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP52(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP54(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP53(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP55(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP54(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP56(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP55(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP57(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP56(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP58(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP57(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP59(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP58(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP60(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP59(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP61(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP60(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP62(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP61(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP63(sep, m, t, ...) m(t) SEP_##sep CPPUTILS_0_MAP62(sep, m, __VA_ARGS__)
+#define CPPUTILS_0_MAP(n, m, ...) CPPUTILS_0_MAP##n(m, __VA_ARGS__)
+
+#define CPPUTILS_1_MAP1(sep, m, a, t, ...) m(a, t)
+#define CPPUTILS_1_MAP2(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP1(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP3(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP2(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP4(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP3(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP5(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP4(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP6(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP5(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP7(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP6(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP8(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP7(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP9(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP8(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP10(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP9(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP11(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP10(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP12(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP11(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP13(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP12(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP14(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP13(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP15(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP14(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP16(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP15(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP17(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP16(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP18(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP17(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP19(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP18(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP20(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP19(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP21(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP20(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP22(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP21(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP23(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP22(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP24(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP23(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP25(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP24(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP26(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP25(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP27(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP26(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP28(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP27(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP29(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP28(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP30(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP29(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP31(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP30(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP32(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP31(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP33(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP32(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP34(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP33(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP35(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP34(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP36(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP35(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP37(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP36(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP38(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP37(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP39(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP38(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP40(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP39(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP41(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP40(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP42(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP41(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP43(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP42(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP44(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP43(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP45(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP44(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP46(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP45(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP47(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP46(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP48(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP47(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP49(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP48(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP50(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP49(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP51(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP50(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP52(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP51(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP53(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP52(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP54(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP53(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP55(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP54(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP56(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP55(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP57(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP56(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP58(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP57(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP59(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP58(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP60(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP59(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP61(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP60(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP62(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP61(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP63(sep, m, a, t, ...) m(a, t) SEP_##sep CPPUTILS_1_MAP62(sep, m, a, __VA_ARGS__)
+#define CPPUTILS_1_MAP(n, sep, m, a, ...) CPPUTILS_1_MAP##n(sep, m, a, __VA_ARGS__)
+
+// Need to defer the map call one level to let CPPUTILS_NARGS evaluate
+#define CPPUTILS_DECORATED_0_MAP(sep, decorator,    ...) CPPUTILS_DECORATED_0_MAP_DEFER(CPPUTILS_NARGS(__VA_ARGS__), sep, decorator,    __VA_ARGS__)
+#define CPPUTILS_DECORATED_1_MAP(sep, decorator, a, ...) CPPUTILS_DECORATED_1_MAP_DEFER(CPPUTILS_NARGS(__VA_ARGS__), sep, decorator, a, __VA_ARGS__)
+
+#define CPPUTILS_DECORATED_0_MAP_DEFER(n, sep, decorator,    ...) CPPUTILS_0_MAP(n, sep, decorator,    __VA_ARGS__)
+#define CPPUTILS_DECORATED_1_MAP_DEFER(n, sep, decorator, a, ...) CPPUTILS_1_MAP(n, sep, decorator, a, __VA_ARGS__)
