@@ -27,6 +27,12 @@ cmake -DCMAKE_PREFIX_PATH=$HOME/local_install -DCMAKE_INSTALL_PREFIX=$HOME/local
 make -j4 && make install
 ```
 
+Make softlinks to CAEN libariries in $HOME/local_install
+```bash
+ln -s /usr/lib/libCAENComm.so $HOME/local_install/.
+ln -s /usr/lib/libCAENDigitizer.so $HOME/local_install/.
+ln -s /usr/lib/libCAENVME.so $HOME/local_install/.
+```
 
 Then cd back to main folder CalvisionDaq and build CalvisionDAQ:
 ```bash
