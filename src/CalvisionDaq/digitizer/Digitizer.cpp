@@ -8,6 +8,21 @@
  * 16-bit DAC sets the DC offset.
  */
 
+#include <iomanip>
+#include <chrono>
+std::ostream& log_with_timestamp(std::ostream& os) {
+    using Clock = std::chrono::system_clock;
+    auto now = Clock::now();
+    auto now_time = Clock::to_time_t(now);
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      now.time_since_epoch()) % 1000;
+
+    os << "[" << std::put_time(std::localtime(&now_time), "%F %T")
+       << "." << std::setw(3) << std::setfill('0') << millis.count()
+       << "] ";
+    return os;
+}
+
 UIntType DAC_voltage_to_register(float voltage) {
     if (voltage > 0 || voltage < -Digitizer::voltage_p2p()) {
         // std::cout << "[ERROR] DAC voltage outside [-V_pp,0] range: " << voltage << "\n";
@@ -66,7 +81,7 @@ void Digitizer::print_raw_file(const std::string& path) {
 void Digitizer::load_config(const std::string& config_file)
 {
     if (config_file == "") {
-        log() << "[WARNING] No config file provided, continuing\n";
+        log_with_timestamp(log()) << "[WARNING] No config file provided, continuing\n";
     }
     // print_raw_file(config_file);
     
@@ -94,7 +109,7 @@ Digitizer::~Digitizer()
     if (handle_ >= 0) {
         check(CAEN_DGTZ_CloseDigitizer(handle_));
         handle_ = -1;
-        log() << "Digitizer closed.\n";
+        log_with_timestamp(log()) << "Digitizer closed.\n";
     }
 
     if (readout_buffer_) {
@@ -111,7 +126,7 @@ void Digitizer::reset() {
 }
 
 void Digitizer::setup() {
-    log() << "Running Digitizer::setup()\n";
+    log_with_timestamp(log()) << "Running Digitizer::setup()\n";
     reset();
 
     check(CAEN_DGTZ_SetFastTriggerDigitizing(handle_, CAEN_DGTZ_ENABLE));
@@ -144,7 +159,7 @@ void Digitizer::setup() {
 void Digitizer::begin_acquisition() {
     // Allocate readout memory
     check(CAEN_DGTZ_MallocReadoutBuffer(handle_, &readout_buffer_, &allocated_size_));
-    log() << "Allocated " << allocated_size_ << " bytes in memory for readout\n";
+    log_with_timestamp(log()) << "Allocated " << allocated_size_ << " bytes in memory for readout\n";
 
     {
         bool fast_trigger = get_fast_trigger_digitizing() == CAEN_DGTZ_ENABLE;
@@ -157,7 +172,7 @@ void Digitizer::begin_acquisition() {
 
         event_size_ = calc_event_size(n_groups, fast_trigger);
         
-        log() << "Number of groups enabled: " << n_groups << "\n"
+        log_with_timestamp(log()) << "Number of groups enabled: " << n_groups << "\n"
               << "Trigger digitized: " << fast_trigger << "\n"
               << "Event Size: " << event_size_ << "\n";
     }
@@ -169,7 +184,7 @@ void Digitizer::begin_acquisition() {
     check(CAEN_DGTZ_SWStartAcquisition(handle_));
 
     query_status();
-    log() << "Acquisition started.\n";
+    log_with_timestamp(log()) << "Acquisition started.\n";
 }
 
 void Digitizer::write_calibration_tables() {
@@ -181,7 +196,7 @@ void Digitizer::write_calibration_tables() {
 void Digitizer::end_acquisition() {
     // Stop acquisition
     check(CAEN_DGTZ_SWStopAcquisition(handle_));
-    log() << "Acquisition stopped.\n";
+    log_with_timestamp(log()) << "Acquisition stopped.\n";
 }
 
 #include "CalvisionDaq/common/Stopwatch.h"
@@ -204,9 +219,9 @@ void Digitizer::read() {
 
     
     if (num_events > 0) {
-        // log() << "Num events in readout: " << num_events << "\n";
+        // log_with_timestamp(log()) << "Num events in readout: " << num_events << "\n";
         if (num_events >= 800) {
-            log() << "Large readout buffer, possibly missing events!\n";
+            log_with_timestamp(log()) << "Large readout buffer, possibly missing events!\n";
         }
         event_callback_(readout_buffer_, event_size_, num_events);
         num_events_read_ += num_events;
@@ -214,7 +229,7 @@ void Digitizer::read() {
 
     // const auto duration = stopwatch();
 
-    // log() << "Read " << num_events << " in " << duration << " (" << (duration / std::min(1u, num_events)) << " / event)\n";
+    // log_with_timestamp(log()) << "Read " << num_events << " in " << duration << " (" << (duration / std::min(1u, num_events)) << " / event)\n";
 }
 
 #include <bitset>
@@ -222,7 +237,7 @@ void Digitizer::read() {
 void Digitizer::query_status() {
     UIntType status_reg;
     check(CAEN_DGTZ_ReadRegister(handle_, CAEN_DGTZ_ACQ_STATUS_ADD, &status_reg));
-    // log() << "status: " << std::bitset<32>(status_reg) << "\n";
+    // log_with_timestamp(log()) << "status: " << std::bitset<32>(status_reg) << "\n";
     running_     = (status_reg & 0b0000'0100) != 0;
     ready_       = (status_reg & 0b0000'1000) != 0;
     buffer_full_ = (status_reg & 0b0001'0000) != 0;
@@ -239,7 +254,7 @@ void Digitizer::set_event_callback(const CallbackFunc& event_callback) {
 
 void Digitizer::print() const {
     // Board info
-    log() << " ----- Board Info:\n"
+    log_with_timestamp(log()) << " ----- Board Info:\n"
               << "Model Name: " << board_info_.ModelName << "\n"
               << "Model: " << *BoardModelTable.get<CaenEnumValue::Name>(static_cast<CAEN_DGTZ_BoardModel_t>(board_info_.Model)) << "\n"
               << "Channels: " << board_info_.Channels << "\n"
@@ -255,92 +270,92 @@ void Digitizer::print() const {
               << "\n";
 
 
-    log() << " ----- Data Readout:\n";
+    log_with_timestamp(log()) << " ----- Data Readout:\n";
     UIntType max_num_events;
     check(CAEN_DGTZ_GetMaxNumEventsBLT(handle_, &max_num_events));
-    log() << "Max Number Events BLT: " << max_num_events << "\n";
+    log_with_timestamp(log()) << "Max Number Events BLT: " << max_num_events << "\n";
 
-    log() << "\n"
+    log_with_timestamp(log()) << "\n"
               << " ----- Trigger Info:\n";
     CAEN_DGTZ_TriggerMode_t trigger_mode;
     
     check(CAEN_DGTZ_GetSWTriggerMode(handle_, &trigger_mode));
-    log() << "SW Trigger Mode: " << *TriggerModeTable.get<CaenEnumValue::Name>(trigger_mode) << "\n";
+    log_with_timestamp(log()) << "SW Trigger Mode: " << *TriggerModeTable.get<CaenEnumValue::Name>(trigger_mode) << "\n";
 
     check(CAEN_DGTZ_GetExtTriggerInputMode(handle_, &trigger_mode));
-    log() << "EXT Trigger Mode: " << *TriggerModeTable.get<CaenEnumValue::Name>(trigger_mode) << "\n";
+    log_with_timestamp(log()) << "EXT Trigger Mode: " << *TriggerModeTable.get<CaenEnumValue::Name>(trigger_mode) << "\n";
 
     CAEN_DGTZ_RunSyncMode_t run_sync_mode;
     check(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &run_sync_mode));
-    log() << "Run Synchronization Mode: " << *RunSyncModeTable.get<CaenEnumValue::Name>(run_sync_mode) << "\n";
+    log_with_timestamp(log()) << "Run Synchronization Mode: " << *RunSyncModeTable.get<CaenEnumValue::Name>(run_sync_mode) << "\n";
 
     CAEN_DGTZ_IOLevel_t io_level;
     check(CAEN_DGTZ_GetIOLevel(handle_, &io_level));
-    log() << "IO Level: " << *IOLevelTable.get<CaenEnumValue::Name>(io_level) << "\n";
+    log_with_timestamp(log()) << "IO Level: " << *IOLevelTable.get<CaenEnumValue::Name>(io_level) << "\n";
 
     for (UIntType i = 0; i < N_Channels; i++) {
         CAEN_DGTZ_TriggerPolarity_t trigger_polarity;
         check(CAEN_DGTZ_GetTriggerPolarity(handle_, i, &trigger_polarity));
-        log() << "Trigger polarity channel " << i << ": " << *TriggerPolarityTable.get<CaenEnumValue::Name>(trigger_polarity) << "\n";
+        log_with_timestamp(log()) << "Trigger polarity channel " << i << ": " << *TriggerPolarityTable.get<CaenEnumValue::Name>(trigger_polarity) << "\n";
     }
 
     for (UIntType i = 0; i < N_Groups; i++) {
         UIntType threshold;
         check(CAEN_DGTZ_GetGroupFastTriggerThreshold(handle_, i, &threshold));
-        log() << "Group " << i << " fast trigger threshold: " << threshold << "\n";
+        log_with_timestamp(log()) << "Group " << i << " fast trigger threshold: " << threshold << "\n";
 
         check(CAEN_DGTZ_GetGroupFastTriggerDCOffset(handle_, i, &threshold));
-        log() << "Group " << i << " fast trigger DC offset: " << threshold << "\n";
+        log_with_timestamp(log()) << "Group " << i << " fast trigger DC offset: " << threshold << "\n";
     }
 
 
-    log() << "Fast Trigger digitizing: " << *EnaDisTable.get<CaenEnumValue::Name>(get_fast_trigger_digitizing()) << "\n";
+    log_with_timestamp(log()) << "Fast Trigger digitizing: " << *EnaDisTable.get<CaenEnumValue::Name>(get_fast_trigger_digitizing()) << "\n";
 
     check(CAEN_DGTZ_GetFastTriggerMode(handle_, &trigger_mode));
-    log() << "Fast Trigger mode: " << *TriggerModeTable.get<CaenEnumValue::Name>(trigger_mode) << "\n";
+    log_with_timestamp(log()) << "Fast Trigger mode: " << *TriggerModeTable.get<CaenEnumValue::Name>(trigger_mode) << "\n";
 
     CAEN_DGTZ_DRS4Frequency_t frequency;
     check(CAEN_DGTZ_GetDRS4SamplingFrequency(handle_, &frequency));
-    log() << "DRS4 Sampling Frequency: " << *DRS4FrequencyTable.get<CaenEnumValue::Name>(frequency) << "\n";
+    log_with_timestamp(log()) << "DRS4 Sampling Frequency: " << *DRS4FrequencyTable.get<CaenEnumValue::Name>(frequency) << "\n";
 
     CAEN_DGTZ_OutputSignalMode_t output_signal_mode;
     check(CAEN_DGTZ_GetOutputSignalMode(handle_, &output_signal_mode));
-    log() << "Output signal Mode: " << *OutputSignalModeTable.get<CaenEnumValue::Name>(output_signal_mode) << "\n";
+    log_with_timestamp(log()) << "Output signal Mode: " << *OutputSignalModeTable.get<CaenEnumValue::Name>(output_signal_mode) << "\n";
 
-    log() << "\n"
+    log_with_timestamp(log()) << "\n"
               << " ----- Acquisition\n";
 
     UIntType mask;
     check(CAEN_DGTZ_GetGroupEnableMask(handle_, &mask));
-    log() << "Group enable mask: " << std::hex << mask << std::dec << "\n";
+    log_with_timestamp(log()) << "Group enable mask: " << std::hex << mask << std::dec << "\n";
 
     UIntType size;
     check(CAEN_DGTZ_GetRecordLength(handle_, &size));
-    log() << "Record Length: " << size << "\n";
+    log_with_timestamp(log()) << "Record Length: " << size << "\n";
 
     UIntType percent;
     check(CAEN_DGTZ_GetPostTriggerSize(handle_, &percent));
-    log() << "Post Trigger Size: " << percent << "%\n";
+    log_with_timestamp(log()) << "Post Trigger Size: " << percent << "%\n";
 
     CAEN_DGTZ_AcqMode_t acquisition_mode;
     check(CAEN_DGTZ_GetAcquisitionMode(handle_, &acquisition_mode));
-    log() << "Acquisition Mode: " << *AcqModeTable.get<CaenEnumValue::Name>(acquisition_mode) << "\n";
+    log_with_timestamp(log()) << "Acquisition Mode: " << *AcqModeTable.get<CaenEnumValue::Name>(acquisition_mode) << "\n";
 
     for (UIntType i = 0; i < N_Channels; i++) {
         UIntType offset;
         check(CAEN_DGTZ_GetChannelDCOffset(handle_, i, &offset));
         float dc_offset = voltage_p2p() * static_cast<float>(offset) / static_cast<float>(0xFFFF);
-        log() << "Channel " << i << " DC offset: " << dc_offset << "\n";
-        log() << "Channel " << i << " range: ["
+        log_with_timestamp(log()) << "Channel " << i << " DC offset: " << dc_offset << "\n";
+        log_with_timestamp(log()) << "Channel " << i << " range: ["
             << (dc_offset - voltage_p2p()) << ", "
             << (dc_offset -             0) << "]\n";
     }
 
     CAEN_DGTZ_ZS_Mode_t zs_mode;
     check(CAEN_DGTZ_GetZeroSuppressionMode(handle_, &zs_mode));
-    log() << "Zero suppression mode: " << *ZS_ModeTable.get<CaenEnumValue::Name>(zs_mode) << "\n";
+    log_with_timestamp(log()) << "Zero suppression mode: " << *ZS_ModeTable.get<CaenEnumValue::Name>(zs_mode) << "\n";
 
-    log() << "\n";
+    log_with_timestamp(log()) << "\n";
 }
 
 void Digitizer::set_channel_offsets(const ChannelArray<UIntType>& offsets) {

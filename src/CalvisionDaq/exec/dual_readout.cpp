@@ -11,10 +11,37 @@
 
 #include "CppUtils/c_util/CUtil.h"
 
+
+
+
+
 #include <iostream>
 #include <fstream>
 #include <memory>
 #include <atomic>
+
+#include <iomanip>
+#include <chrono>
+std::ostream& log_with_timestamp(std::ostream& os) {
+    using Clock = std::chrono::system_clock;
+    auto now = Clock::now();
+    auto now_time = Clock::to_time_t(now);
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      now.time_since_epoch()) % 1000;
+
+    os << "[" << std::put_time(std::localtime(&now_time), "%F %T")
+       << "." << std::setw(3) << std::setfill('0') << millis.count()
+       << "] ";
+    return os;
+}
+
+//handling external kill signal
+#include <csignal>    // for std::signal
+extern std::atomic<bool> quit_readout;
+void handle_sigterm(int signum) {
+    std::cout << "\n[dual_readout] Caught signal " << signum << "stopping DAQ gracefully.\n";
+    quit_readout.store(true);
+}
 
 std::atomic<bool> quit_readout = false;
 std::atomic<bool> dump_hv = false;
@@ -61,10 +88,10 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
         root_io.handle_event(decoder.event());
         // std::cout << thread_id << ": Root io: " << stopwatch() << "\n";
         if (dump.load()) {
-            std::cout << thread_id << ": writing waveform dump\n";
+            // std::cout << thread_id << ": writing waveform dump"<< std::endl;;
             root_io.dump_last_event(ctx.path_prefix() + "/dump_" + ctx.name());
             dump.store(false);
-            std::cout << thread_id << ": waveform dump written\n";
+            // std::cout << thread_id << ": waveform dump written"<< std::endl;;
         }
 
         // std::cout << thread_id << ": Deallocating block " << block << "\n";
@@ -105,10 +132,15 @@ void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump)
 
     try {
 
-        ctx.log() << "Beginning readout" << std::endl;
-
+        log_with_timestamp(ctx.log()) << "Beginning readout" << std::endl;
+        static UIntType last = -1;
+        
         ctx.digi().readout([](const Digitizer& d) {
-                std::cout << "Read " << d.num_events_read() << "\n";
+                UIntType current = d.num_events_read();
+                if (current != last && (current <= 10 || (current <= 100 && current % 10 == 0) || (current <= 1000 && current % 100 == 0) || (current % 1000 == 0))) {
+                    std::cout << "Read " << current << std::endl;
+                    last = current;
+                }
                 // std::cout.flush();
 
                 // Can maybe sleep for more efficient readouts?
@@ -125,20 +157,20 @@ void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump)
             });
 
 
-        ctx.log() << thread_id << ": Stopped readout" << std::endl;
+        log_with_timestamp(ctx.log()) << thread_id << ": Stopped readout" << std::endl;
 
         queue.close();
         decode_thread.join();
 
-        ctx.log() << thread_id << ": Resetting digitzer..." << std::endl;
+        log_with_timestamp(ctx.log()) << thread_id << ": Resetting digitzer..." << std::endl;
         ctx.digi().reset();
 
-        ctx.log() << thread_id << ": Done." << std::endl;
+        log_with_timestamp(ctx.log()) << thread_id << ": Done." << std::endl;
 
     } catch (const CaenError& error) {
         std::cerr << "[FATAL ERROR]: ";
         error.print_error(std::cerr);
-        error.print_error(ctx.log());
+        error.print_error(log_with_timestamp(ctx.log()));
         quit_readout.store(true);;
         queue.close();
     } catch(...) {
@@ -155,6 +187,8 @@ void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump)
 #include <termios.h>
 
 void interrupt_listener() {
+    std::cout << "[interrupt_listener] Starting input loop\n";
+
     struct termios cintty;
     struct termios cinsave;
     tcgetattr(STDIN_FILENO, &cinsave);
@@ -169,34 +203,40 @@ void interrupt_listener() {
 
     char buffer[4096];
     size_t current_size = 0;
+
     while (!quit_readout.load()) {
+        // std::cout << "[interrupt_listener] Polling stdin..."<<std::endl;
         int num_read = ::read(STDIN_FILENO, buffer + current_size, 4095 - current_size);
+        
         if (num_read < 0) {
-            // An error has occured, stop the readout
+            std::cerr << "[interrupt_listener] Error reading stdin"<<std::endl;
             quit_readout.store(true);
             break;
         } else if (num_read == 0) {
-            // didn't read anything
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
-        } else {
-            current_size += num_read;
-            buffer[current_size] = '\0';
-            std::string message(buffer);
+        }
 
-            if (message == "stop\n") {
-                quit_readout.store(true);
-                break;
-            } else if (message == "sample plot\n") {
-                dump_hv.store(true);
-                // dump_lv.store(true);
-                current_size = 0;
-            }
+        current_size += num_read;
+        buffer[current_size] = '\0';
+        std::string message(buffer);
+
+        // std::cout << "[interrupt_listener] Received input: " << message <<std::endl;
+
+        if (message == "stop\n") {
+            std::cout << "[interrupt_listener] Stop command received"<<std::endl;
+            quit_readout.store(true);
+            break;
+        } else if (message == "sample plot\n") {
+            dump_hv.store(true);
+            current_size = 0;
         }
     }
-    quit_readout.store(true);
-    std::cout << "Out of the loop\n";
+
+    std::cout << "[interrupt_listener] Exiting"<<std::endl;
     tcsetattr(STDIN_FILENO, TCSANOW, &cinsave);
 }
+
 
 
 template <DigiMap d>
@@ -221,6 +261,8 @@ DigitizerContext& make_context(AllDigitizers& digis, char** argv) {
 #include <TROOT.h>
 
 int main(int argc, char** argv) {
+    std::signal(SIGTERM, handle_sigterm);
+    std::signal(SIGINT,  handle_sigterm); // for Ctrl+C or terminal closes
 
     if (argc != 4) {
         std::cout << "Usage: " << argv[0] << " [run name] [config hv] [config lv]\n";
