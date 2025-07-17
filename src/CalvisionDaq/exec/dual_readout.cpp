@@ -39,7 +39,7 @@ std::ostream& log_with_timestamp(std::ostream& os) {
 #include <csignal>    // for std::signal
 extern std::atomic<bool> quit_readout;
 void handle_sigterm(int signum) {
-    std::cout << "\n[dual_readout] Caught signal " << signum << "stopping DAQ gracefully.\n";
+    std::cout << "[dual_readout] Caught signal " << signum << "stopping DAQ gracefully."<<std::endl;
     quit_readout.store(true);
 }
 
@@ -52,14 +52,14 @@ using QueueType = SPSCQueue<typename PoolType::BlockType, 1024 * 50>;
 
 
 void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueType& queue, std::atomic<bool>& dump) {
-    std::cout << thread_id << ": Creating decoder\n";
+    std::cout << "[dual_readout]Thread"<<thread_id << ": Creating decoder"<< std::endl;
     Decoder decoder(ctx.digi().serial_code());
     const std::string root_io_path = ctx.path_prefix() + "/outfile_" + ctx.name() + ".root";
-    std::cout << thread_id << ": Creating root io: " << root_io_path << "\n";
+    std::cout << "[dual_readout]Thread"<<thread_id << ": Creating root io: " << root_io_path << std::endl;
     RootWriter root_io(root_io_path);
     root_io.setup(decoder.event());
 
-    std::cout << thread_id << ": Entering decode loop\n";
+    std::cout << "[dual_readout]Thread"<<thread_id << ": Entering decode loop\n";
 
     Stopwatch<std::chrono::microseconds> stopwatch;
     // uint64_t last_read_waits = 0;
@@ -67,18 +67,18 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
     size_t decode_count = 0;
 
     while (auto block = queue.pop()) {
-        // std::cout << "Decoding event " << decode_count << "\n";
+        // std::cout << "Decoding event " << decode_count << std::endl;
         // std::cout << thread_id << ": Got a block!\n";
 
         // const auto wait_duration = stopwatch();
         // if (ctx.queue().read_waits() > last_read_waits) {
-        //     std::cout << thread_id << ": read waited " << wait_duration << "\n";
+        //     std::cout << thread_id << ": read waited " << wait_duration << std::endl;
         //     last_read_waits = ctx.queue().read_waits();
         // }
 
         BinaryInputBufferStream input((const char*) block->block().data(), ctx.digi().event_size());
 
-        // std::cout << "Expected event size: " << ctx.digi().event_size() << "\n";
+        // std::cout << "Expected event size: " << ctx.digi().event_size() << std::endl;
 
         decoder.read_event(input);
         decoder.apply_corrections();
@@ -86,15 +86,27 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
         
         // stopwatch();
         root_io.handle_event(decoder.event());
-        // std::cout << thread_id << ": Root io: " << stopwatch() << "\n";
+        // std::cout << thread_id << ": Root io: " << stopwatch() << std::endl;
         if (dump.load()) {
-            // std::cout << thread_id << ": writing waveform dump"<< std::endl;;
+
+            // // --- Overflow Check --- not working
+            // uint32_t status = 0;
+            // int err = CAEN_DGTZ_ReadRegister(ctx.digi().handle(), 0x812C, &status);
+            // if (err != 0) {
+            //     std::cout << "[dual_readout]Thread"<<thread_id << ": [ERROR] Failed to read Acquisition Status Register: " << err << std::endl;
+            // } else if (status & (1 << 2)) {
+            //     std::cout << "[dual_readout]Thread"<<thread_id << ": [WARNING] Buffer overflow detected!" << std::endl;
+            // } else{
+            //     std::cout << "[dual_readout]Thread"<<thread_id << "Digitizer buffer is not overflowed." << std::endl;
+            // }
+
+            // std::cout << "[dual_readout]Thread"<<thread_id << ": writing waveform dump"<< std::endl;;
             root_io.dump_last_event(ctx.path_prefix() + "/dump_" + ctx.name());
             dump.store(false);
-            // std::cout << thread_id << ": waveform dump written"<< std::endl;;
+            // std::cout << "[dual_readout]Thread"<<thread_id << ": waveform dump written"<< std::endl;;
         }
 
-        // std::cout << thread_id << ": Deallocating block " << block << "\n";
+        // std::cout << thread_id << ": Deallocating block " << block << std::endl;
 
         pool.deallocate(block);
 
@@ -109,6 +121,8 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
     }
 
     root_io.write();
+    std::cout << "[dual_readout]Thread"<<thread_id << ": decode_loop exiting. decode_count=" << decode_count << std::endl;
+
 }
 
 void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump) {
@@ -116,6 +130,7 @@ void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump)
     PoolType pool(1024);
     QueueType queue;
 
+    // static int log_count = 0;
     ctx.digi().set_event_callback(
         [&pool, &queue, thread_id]
         (const char* data, UIntType event_size, UIntType num_events) {
@@ -123,6 +138,10 @@ void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump)
             for (auto* block : blocks) {
                 copy_raw_buffer<uint8_t, char>(block->block().data(), data, event_size);
                 queue.add(block);
+                // if (log_count < 10) {
+                //     std::cout << "[readout_thread] block pushed to decode queue" << thread_id << std::endl;
+                //      ++log_count;
+                // }
                 data += event_size;
             }
         });
@@ -229,6 +248,7 @@ void interrupt_listener() {
             break;
         } else if (message == "sample plot\n") {
             dump_hv.store(true);
+            // std::cout << "[interrupt_listener] Sample plot command received"<<std::endl;
             current_size = 0;
         }
     }
@@ -264,6 +284,8 @@ int main(int argc, char** argv) {
     std::signal(SIGTERM, handle_sigterm);
     std::signal(SIGINT,  handle_sigterm); // for Ctrl+C or terminal closes
 
+
+
     if (argc != 4) {
         std::cout << "Usage: " << argv[0] << " [run name] [config hv] [config lv]\n";
         return 1;
@@ -274,10 +296,14 @@ int main(int argc, char** argv) {
     std::vector<std::thread> main_threads;
     std::thread listener(&interrupt_listener);
 
+    std::string log_path;
+
     try {
         AllDigitizers digis{std::string(argv[1])};
 
         auto& hv_ctx = make_context<DigiMap::HG>(digis, argv);
+        log_path = hv_ctx.path_prefix() + "/readout_" + hv_ctx.name() + ".log";
+
         // auto& lv_ctx = make_context<DigiMap::LG>(digis, argv);
 
         std::cout << "Beginning to make threads...\n";
@@ -303,9 +329,18 @@ int main(int argc, char** argv) {
         error.print_error(std::cerr);
     }
 
+
     quit_readout.store(true);
 
     listener.join();
+    std::ofstream append_log(log_path, std::ios::app);
+    if (append_log) {
+        log_with_timestamp(append_log)
+            << "Clean exit confirmed."
+            << std::endl;
+    } else {
+        std::cerr << "[ERROR] Failed to reopen log file for appending: " << log_path << std::endl;
+    }
 
 
     return 0;
