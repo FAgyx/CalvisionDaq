@@ -4,7 +4,7 @@ DRS readout and analysis for Calvision.
 
 ## Dependencies
 
-Install CAENComm, CAENVMELib and CAENDigitizer from CAEN website. CAENUSBdrvB is not used and not required to install.
+Install CAENComm, CAENVMELib and CAENDigitizer and CAENUSBdrvB from CAEN website.
 
 
 ## Change data storage location
