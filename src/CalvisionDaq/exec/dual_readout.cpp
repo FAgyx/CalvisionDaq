@@ -51,6 +51,49 @@ using PoolType = MemoryPool<Digitizer::max_event_size()>;
 using QueueType = SPSCQueue<typename PoolType::BlockType, 1024 * 50>;
 
 
+void write_event_to_dat_file_raw(const x742EventData& event, std::ofstream& out) {
+    int32_t event_number = event.event_counter;
+    out.write(reinterpret_cast<const char*>(&event_number), sizeof(event_number));
+    
+    // Write raw ADC values as int16_t
+    for (int ch = 0; ch < 16; ++ch) {
+        const auto& group = event.group_data[ch / 8];
+        const auto& waveform = group.channel_data[ch % 8]; // Use raw ADC data here
+        for (auto sample : waveform) {
+            int16_t adc_val = static_cast<int16_t>(sample);
+            out.write(reinterpret_cast<const char*>(&adc_val), sizeof(adc_val));
+        }
+    }
+
+    const auto& trig_waveform = event.group_data[0].trigger_data;
+    for (auto sample : trig_waveform) {
+        int16_t trig_adc = static_cast<int16_t>(sample);
+        out.write(reinterpret_cast<const char*>(&trig_adc), sizeof(trig_adc));
+    }
+}
+
+void write_event_to_dat_file_corrected(const x742EventData& event, std::ofstream& out) {
+    int32_t event_number = event.event_counter;
+    out.write(reinterpret_cast<const char*>(&event_number), sizeof(event_number));
+
+    // Write calibrated float waveform
+    for (int ch = 0; ch < 16; ++ch) {
+        const auto& group = event.group_data[ch / 8];
+        const auto& waveform = group.channel_data[ch % 8]; // Corrected waveform
+        for (auto sample : waveform) {
+            float val = sample;  // calibrated float
+            out.write(reinterpret_cast<const char*>(&val), sizeof(val));
+        }
+    }
+
+    const auto& trig_waveform = event.group_data[0].trigger_data;
+    for (auto sample : trig_waveform) {
+        float trig_val = sample;
+        out.write(reinterpret_cast<const char*>(&trig_val), sizeof(trig_val));
+    }
+}
+
+
 void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueType& queue, std::atomic<bool>& dump) {
     std::cout << "[dual_readout]Thread"<<thread_id << ": Creating decoder"<< std::endl;
     Decoder decoder(ctx.digi().serial_code());
@@ -61,10 +104,20 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
 
     std::cout << "[dual_readout]Thread"<<thread_id << ": Entering decode loop\n";
 
+    // create .dat output stream
+    std::ofstream dat_out_raw(ctx.path_prefix() + "/outfile_raw_" + ctx.name() + ".dat", std::ios::binary);
+    std::ofstream dat_out_corrected(ctx.path_prefix() + "/outfile_corrected_" + ctx.name() + ".dat", std::ios::binary);
+    if (!dat_out_raw.is_open() || !dat_out_corrected.is_open()) {
+        std::cerr << "Failed to open dat files for writing\n";
+        return;
+    }
+
+
     Stopwatch<std::chrono::microseconds> stopwatch;
     // uint64_t last_read_waits = 0;
 
     size_t decode_count = 0;
+    // bool written = false;
 
     while (auto block = queue.pop()) {
         // std::cout << "Decoding event " << decode_count << std::endl;
@@ -80,11 +133,24 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
 
         // std::cout << "Expected event size: " << ctx.digi().event_size() << std::endl;
 
+        // Write raw dat file
+        write_event_to_dat_file_raw(decoder.event(), dat_out_raw);
+        
+
+
         decoder.read_event(input);
         decoder.apply_corrections();
 
+        //Write corrected dat file
+        // if(!written){
+        write_event_to_dat_file_corrected(decoder.event(), dat_out_corrected);
+            // written = true;
+        // }
+
         
         // stopwatch();
+
+        // Write ROOT file
         root_io.handle_event(decoder.event());
         // std::cout << thread_id << ": Root io: " << stopwatch() << std::endl;
         if (dump.load()) {
