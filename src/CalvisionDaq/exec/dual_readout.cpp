@@ -11,10 +11,6 @@
 
 #include "CppUtils/c_util/CUtil.h"
 
-
-
-
-
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -22,6 +18,7 @@
 
 #include <iomanip>
 #include <chrono>
+
 std::ostream& log_with_timestamp(std::ostream& os) {
     using Clock = std::chrono::system_clock;
     auto now = Clock::now();
@@ -58,7 +55,7 @@ void write_event_to_dat_file_raw(const x742EventData& event, std::ofstream& out)
     // Write raw ADC values as int16_t
     for (int ch = 0; ch < 16; ++ch) {
         const auto& group = event.group_data[ch / 8];
-        const auto& waveform = group.channel_data[ch % 8]; // Use raw ADC data here
+        const auto& waveform = group.channel_data[ch % 8]; // Uses raw ADC data 
         for (auto sample : waveform) {
             int16_t adc_val = static_cast<int16_t>(sample);
             out.write(reinterpret_cast<const char*>(&adc_val), sizeof(adc_val));
@@ -80,11 +77,15 @@ void write_event_to_dat_file_corrected(const x742EventData& event, std::ofstream
     for (int ch = 0; ch < 16; ++ch) {
         const auto& group = event.group_data[ch / 8];
         const auto& waveform = group.channel_data[ch % 8]; // Corrected waveform
+        // std::cout << "  Channel " << ch << " samples: " << waveform.size() << "\n";
+
         for (auto sample : waveform) {
             float val = sample;  // calibrated float
             out.write(reinterpret_cast<const char*>(&val), sizeof(val));
+
         }
     }
+    // std::cout << "  Trigger samples: " << event.group_data[0].trigger_data.size() << "\n";
 
     const auto& trig_waveform = event.group_data[0].trigger_data;
     for (auto sample : trig_waveform) {
@@ -93,11 +94,11 @@ void write_event_to_dat_file_corrected(const x742EventData& event, std::ofstream
     }
 }
 
-
 void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueType& queue, std::atomic<bool>& dump) {
     std::cout << "[dual_readout]Thread"<<thread_id << ": Creating decoder"<< std::endl;
     Decoder decoder(ctx.digi().serial_code());
-    const std::string root_io_path = ctx.path_prefix() + "/outfile_" + ctx.name() + ".root";
+
+    const std::string root_io_path = ctx.path_prefix() + "/outfile_" + ctx.name() + ".root"; // corrected root
     std::cout << "[dual_readout]Thread"<<thread_id << ": Creating root io: " << root_io_path << std::endl;
     RootWriter root_io(root_io_path);
     root_io.setup(decoder.event());
@@ -105,9 +106,10 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
     std::cout << "[dual_readout]Thread"<<thread_id << ": Entering decode loop\n";
 
     // create .dat output stream
-    std::ofstream dat_out_raw(ctx.path_prefix() + "/outfile_raw_" + ctx.name() + ".dat", std::ios::binary);
-    std::ofstream dat_out_corrected(ctx.path_prefix() + "/outfile_corrected_" + ctx.name() + ".dat", std::ios::binary);
-    if (!dat_out_raw.is_open() || !dat_out_corrected.is_open()) {
+    // std::ofstream dat_out_raw(ctx.path_prefix() + "/outfile_raw_" + ctx.name() + ".dat", std::ios::binary); 
+    std::ofstream dat_out_corrected(ctx.path_prefix() + "/outfile_" + ctx.name() + ".dat", std::ios::binary);
+    // if (!dat_out_raw.is_open() || !dat_out_corrected.is_open()) {
+    if (!dat_out_corrected.is_open()) {
         std::cerr << "Failed to open dat files for writing\n";
         return;
     }
@@ -120,6 +122,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
     // bool written = false;
 
     while (auto block = queue.pop()) {
+        
         // std::cout << "Decoding event " << decode_count << std::endl;
         // std::cout << thread_id << ": Got a block!\n";
 
@@ -134,7 +137,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
         // std::cout << "Expected event size: " << ctx.digi().event_size() << std::endl;
 
         // Write raw dat file
-        write_event_to_dat_file_raw(decoder.event(), dat_out_raw);
+        // write_event_to_dat_file_raw(decoder.event(), dat_out_raw);
         
 
 
@@ -219,11 +222,11 @@ void main_loop(size_t thread_id, DigitizerContext& ctx, std::atomic<bool>& dump)
 
         log_with_timestamp(ctx.log()) << "Beginning readout" << std::endl;
         static UIntType last = -1;
-        
+
         ctx.digi().readout([](const Digitizer& d) {
                 UIntType current = d.num_events_read();
                 if (current != last && (current <= 10 || (current <= 100 && current % 10 == 0) || (current <= 1000 && current % 100 == 0) || (current % 1000 == 0))) {
-                    std::cout << "Read " << current << std::endl;
+                    // std::cout << "Read " << current << std::endl;
                     last = current;
                 }
                 // std::cout.flush();
