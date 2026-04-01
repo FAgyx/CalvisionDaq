@@ -98,10 +98,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
     std::cout << "[dual_readout]Thread"<<thread_id << ": Creating decoder"<< std::endl;
     Decoder decoder(ctx.digi().serial_code());
 
-    const std::string root_io_path = ctx.path_prefix() + "/outfile_" + ctx.name() + ".root"; // corrected root
-    std::cout << "[dual_readout]Thread"<<thread_id << ": Creating root io: " << root_io_path << std::endl;
-    RootWriter root_io(root_io_path);
-    root_io.setup(decoder.event());
+    // Root file output disabled: keep only .dat output as requested
 
     std::cout << "[dual_readout]Thread"<<thread_id << ": Entering decode loop\n";
 
@@ -153,8 +150,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
         
         // stopwatch();
 
-        // Write ROOT file
-        root_io.handle_event(decoder.event());
+        // ROOT output intentionally disabled; only writing .dat
         // std::cout << thread_id << ": Root io: " << stopwatch() << std::endl;
         if (dump.load()) {
 
@@ -170,7 +166,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
             // }
 
             // std::cout << "[dual_readout]Thread"<<thread_id << ": writing waveform dump"<< std::endl;;
-            root_io.dump_last_event(ctx.path_prefix() + "/dump_" + ctx.name());
+            // waveform dump via ROOT disabled
             dump.store(false);
             // std::cout << "[dual_readout]Thread"<<thread_id << ": waveform dump written"<< std::endl;;
         }
@@ -189,7 +185,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
         // stopwatch();
     }
 
-    root_io.write();
+    // root_io.write() removed: no ROOT file produced
     std::cout << "[dual_readout]Thread"<<thread_id << ": decode_loop exiting. decode_count=" << decode_count << std::endl;
 
 }
