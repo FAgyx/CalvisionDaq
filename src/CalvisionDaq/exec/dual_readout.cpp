@@ -152,6 +152,7 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
 
         // ROOT output intentionally disabled; only writing .dat
         // std::cout << thread_id << ": Root io: " << stopwatch() << std::endl;
+
         if (dump.load()) {
 
             // // --- Overflow Check --- not working
@@ -166,7 +167,18 @@ void decode_loop(size_t thread_id, DigitizerContext& ctx, PoolType& pool, QueueT
             // }
 
             // std::cout << "[dual_readout]Thread"<<thread_id << ": writing waveform dump"<< std::endl;;
-            // waveform dump via ROOT disabled
+            try {
+                const std::string tmp_root = ctx.path_prefix() + "/.tmp_root_" + ctx.name() + ".root";
+                RootWriter tmp_root_io(tmp_root);
+                tmp_root_io.setup(decoder.event());
+                tmp_root_io.handle_event(decoder.event());
+                tmp_root_io.dump_last_event(ctx.path_prefix() + "/dump_" + ctx.name());
+                tmp_root_io.write();
+                std::remove(tmp_root.c_str());
+            } catch (...) {
+                std::cerr << "[dual_readout]Thread"<<thread_id<<": failed to write dump"<<std::endl;
+            }
+
             dump.store(false);
             // std::cout << "[dual_readout]Thread"<<thread_id << ": waveform dump written"<< std::endl;;
         }
